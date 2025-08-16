@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .upload-section {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .upload-section:hover {
+            border-color: #4facfe;
+            background: #f0f8ff;
+        }
+
+        .upload-section.dragover {
+            border-color: #4facfe;
+            background: #e6f3ff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            color: #ddd;
+            margin-bottom: 20px;
+        }
+
+        .upload-section.dragover .upload-icon {
+            color: #4facfe;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .redetect-section {
+            text-align: center;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-top: 2px solid #e9ecef;
+        }
+
+        .upload-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 172, 254, 0.3);
+        }
+
+        .controls {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .control-group {
+            display: inline-block;
+            margin: 0 20px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input[type="range"] {
+            width: 150px;
+        }
+
+        .tolerance-value {
+            font-weight: bold;
+            color: #4facfe;
+            margin-left: 10px;
+        }
+
+        .image-preview {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .preview-container {
+            position: relative;
+            display: inline-block;
+            max-width: 100%;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .face-box {
+            position: absolute;
+            border: 3px solid #4facfe;
+            background: rgba(79, 172, 254, 0.1);
+            backdrop-filter: blur(2px);
+        }
+
+        .face-label {
+            position: absolute;
+            background: rgba(79, 172, 254, 0.9);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            font-weight: bold;
+            top: -35px;
+            left: 0;
+            white-space: nowrap;
+        }
+
+        .results {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+        }
+
+        .results h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .result-item {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .result-name {
+            font-weight: bold;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .result-confidence {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4facfe;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fff5f5;
+            border: 1px solid #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .success {
+            background: #f0fff4;
+            border: 1px solid #9ae6b4;
+            color: #2f855a;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎭 Face Recognition System</h1>
+            <p>Upload an image to identify faces using AI</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="upload-section" id="uploadSection">
+                <div class="upload-icon">📷</div>
+                <h3>Drop your image here or click to browse</h3>
+                <p>Supports JPG, PNG, and other image formats</p>
+                <input type="file" id="imageInput" accept="image/*">
+                <button class="upload-btn" onclick="document.getElementById('imageInput').click()">
+                    Choose Image
+                </button>
+            </div>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <label>Face Recognition Tolerance:</label>
+                    <input type="range" id="toleranceSlider" min="0.3" max="1.0" step="0.1" value="0.6">
+                    <span class="tolerance-value" id="toleranceValue">0.6</span>
+                </div>
+            </div>
+            
+            <div class="image-preview" id="imagePreview" style="display: none;">
+                <div class="preview-container">
+                    <img id="previewImage" class="preview-image">
+                </div>
+                <div class="redetect-section">
+                    <button class="upload-btn" id="redetectBtn" onclick="detectFaces()" style="display: none;">
+                        🚀 Start Detection
+                    </button>
+                </div>
+            </div>
+            
+            <div class="loading" id="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Analyzing faces in your image...</p>
+            </div>
+            
+            <div id="results"></div>
+        </div>
+    </div>
+
+    <script>
+        const uploadSection = document.getElementById('uploadSection');
+        const imageInput = document.getElementById('imageInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImage = document.getElementById('previewImage');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const toleranceSlider = document.getElementById('toleranceSlider');
+        const toleranceValue = document.getElementById('toleranceValue');
+        const redetectBtn = document.getElementById('redetectBtn');
+
+        let currentImageFile = null;
+        let hasDetectedFaces = false;
+
+        // Update tolerance value display
+        toleranceSlider.addEventListener('input', function() {
+            toleranceValue.textContent = this.value;
+        });
+
+        // Drag and drop functionality
+        uploadSection.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadSection.classList.add('dragover');
+        });
+
+        uploadSection.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            uploadSection.classList.remove('dragover');
+        });
+
+        uploadSection.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadSection.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleImage(files[0]);
+            }
+        });
+
+        // File input change
+        imageInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                handleImage(this.files[0]);
+            }
+        });
+
+        function handleImage(file) {
+            if (!file.type.startsWith('image/')) {
+                showError('Please select a valid image file.');
+                return;
+            }
+
+            // Store the current image file and reset detection state
+            currentImageFile = file;
+            hasDetectedFaces = false;
+
+            // Show image preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImage.src = e.target.result;
+                imagePreview.style.display = 'block';
+                redetectBtn.style.display = 'inline-block';
+                redetectBtn.textContent = '🚀 Start Detection';
+                
+                // Clear previous results
+                results.innerHTML = '';
+                document.querySelectorAll('.face-box').forEach(box => box.remove());
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function detectFaces() {
+            if (!currentImageFile) {
+                showError('No image available for detection.');
+                return;
+            }
+
+            // Clear previous results and face boxes
+            results.innerHTML = '';
+            document.querySelectorAll('.face-box').forEach(box => box.remove());
+
+            // Analyze the image with current settings
+            uploadImage(currentImageFile);
+        }
+
+        function uploadImage(file) {
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('tolerance', toleranceSlider.value);
+
+            loading.style.display = 'block';
+            results.innerHTML = '';
+            
+            // Update button state during processing
+            redetectBtn.disabled = true;
+            if (hasDetectedFaces) {
+                redetectBtn.textContent = '🔄 Processing...';
+            } else {
+                redetectBtn.textContent = '🔍 Detecting...';
+            }
+
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                loading.style.display = 'none';
+                
+                // Mark as detected and update button
+                hasDetectedFaces = true;
+                redetectBtn.disabled = false;
+                redetectBtn.textContent = '🔄 Re-detect Faces';
+                
+                if (data.success) {
+                    displayResults(data);
+                } else {
+                    showError(data.error || 'An error occurred while processing the image.');
+                }
+            })
+            .catch(error => {
+                loading.style.display = 'none';
+                
+                // Re-enable button but keep appropriate text
+                redetectBtn.disabled = false;
+                if (hasDetectedFaces) {
+                    redetectBtn.textContent = '🔄 Re-detect Faces';
+                } else {
+                    redetectBtn.textContent = '🚀 Start Detection';
+                }
+                
+                showError('Network error: ' + error.message);
+            });
+        }
+
+        function displayResults(data) {
+            const predictions = data.predictions;
+            
+            if (predictions.length === 0) {
+                results.innerHTML = `
+                    <div class="results">
+                        <h3>No faces detected with sufficient confidence</h3>
+                        <p>Try adjusting the tolerance settings or use a clearer image. Only faces with 50%+ confidence are shown.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Clear previous face boxes
+            document.querySelectorAll('.face-box').forEach(box => box.remove());
+
+            // Display results
+            let resultsHtml = `
+                <div class="results">
+                    <h3>Found ${predictions.length} face${predictions.length > 1 ? 's' : ''}</h3>
+            `;
+
+            const previewContainer = document.querySelector('.preview-container');
+            const img = previewImage;
+            
+            predictions.forEach((pred, index) => {
+                // Add result item
+                const confidence = (pred.confidence * 100).toFixed(1);
+                resultsHtml += `
+                    <div class="result-item">
+                        <span class="result-name">${pred.name}</span>
+                        <span class="result-confidence">${confidence}%</span>
+                    </div>
+                `;
+
+                // Add face box overlay
+                const faceBox = document.createElement('div');
+                faceBox.className = 'face-box';
+                
+                // Calculate positions relative to displayed image
+                const imgRect = img.getBoundingClientRect();
+                const containerRect = previewContainer.getBoundingClientRect();
+                
+                const scaleX = img.offsetWidth / img.naturalWidth;
+                const scaleY = img.offsetHeight / img.naturalHeight;
+                
+                const left = pred.location.left * scaleX;
+                const top = pred.location.top * scaleY;
+                const width = (pred.location.right - pred.location.left) * scaleX;
+                const height = (pred.location.bottom - pred.location.top) * scaleY;
+                
+                faceBox.style.left = left + 'px';
+                faceBox.style.top = top + 'px';
+                faceBox.style.width = width + 'px';
+                faceBox.style.height = height + 'px';
+                
+                // Add label
+                const label = document.createElement('div');
+                label.className = 'face-label';
+                label.textContent = `${pred.name} (${confidence}%)`;
+                faceBox.appendChild(label);
+                
+                previewContainer.appendChild(faceBox);
+            });
+
+            resultsHtml += '</div>';
+            results.innerHTML = resultsHtml;
+        }
+
+        function showError(message) {
+            results.innerHTML = `
+                <div class="error">
+                    <strong>Error:</strong> ${message}
+                </div>
+            `;
+        }
+
+        // Resize face boxes when window resizes
+        window.addEventListener('resize', function() {
+            // Remove existing face boxes on resize - they'll be recreated if user re-analyzes
+            document.querySelectorAll('.face-box').forEach(box => box.remove());
+        });
+    </script>
+</body>
+</html>
