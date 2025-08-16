@@ -40,8 +40,8 @@ cd Face-Recognition
 ### 2️⃣ Create & Activate Virtual Environment
 ```bash
 python3 -m venv venv
-source venv/bin/activate       # macOS/Linux
-venv\Scripts\activate          # Windows
+source bin/activate       # macOS/Linux
+Scripts\activate          # Windows
 ```
 
 ### 3️⃣ Install Dependencies
@@ -112,3 +112,4 @@ This project is licensed under the **MIT License**.
 ---
 
 ⭐ **Don't forget to star this repo if you find it useful!**
+
